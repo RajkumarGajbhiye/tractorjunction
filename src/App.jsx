@@ -1,107 +1,84 @@
-import React, { useState } from "react";
-import "./App.css";
+import React, { useState } from 'react';
+import "./App.css"
 
 function App() {
-  const [stages, setStages] = useState({
-    todo: [],
-    inProgress: [],
-    done: [],
-  });
-  const [task, setTask] = useState("");
-  const [date, setDate] = useState("");
-
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState('');
+  
   const addTask = () => {
-    if (task && date) {
-      const newTask = { task, date, completed: false };
-      setStages({ ...stages, todo: [...stages.todo, newTask] });
-      setTask("");
-      setDate("");
-    }
+    if (newTask.trim() === '') return;
+    const task = { id: Date.now(), title: newTask, stage: 'To Do', timestamp: new Date() };
+    setTasks([...tasks, task]);
+    setNewTask('');
   };
 
-  const moveToStage = (index, stageName) => {
-    const taskToMove = stages.todo[index];
-    const updatedTodo = stages.todo.filter((_, i) => i !== index);
-    setStages({
-      ...stages,
-      [stageName]: [...stages[stageName], taskToMove],
-      todo: updatedTodo,
+  const moveTask = (taskId, direction) => {
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        if (direction === 'Next' && task.stage !== 'Done') {
+          task.stage = task.stage === 'To Do' ? 'In Progress' : 'Done';
+          task.timestamp = new Date();
+        } else if (direction === 'Previous' && task.stage !== 'To Do') {
+          task.stage = task.stage === 'Done' ? 'In Progress' : 'To Do';
+          task.timestamp = new Date();
+        }
+      }
+      return task;
     });
-  };
-
-  const toggleCompletion = (index) => {
-    const updatedTodo = [...stages.todo];
-    updatedTodo[index].completed = !updatedTodo[index].completed;
-    setStages({ ...stages, todo: updatedTodo });
+    setTasks(updatedTasks);
   };
 
   return (
-    <div className="App">
-      <h1>To-Do App with Stages</h1>
-      <div className="task-input">
-        <input
-          type="text"
-          placeholder="Task"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-        />
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-        <button onClick={addTask}>Add Task</button>
+    <>
+    <div className="add-task">
+    <input
+      type="text"
+      placeholder="Add a task"
+      value={newTask}
+      onChange={e => setNewTask(e.target.value)}
+    />
+    <button className='btn' onClick={addTask}>Add</button>
+  </div>
+    <div className="main">
+      <div className="stage">
+        <h2>To Do</h2>
+        {tasks
+          .filter(task => task.stage === 'To Do')
+          .map(task => (
+            <div key={task.id} className="task" style={{ backgroundColor: 'red' }}>
+              <p>{task.title}</p>
+              <p>Timestamp: {task.timestamp.toLocaleString()}</p>
+              <button  onClick={() => moveTask(task.id, 'Next')} disabled={task.stage === 'Done'}>Next</button>
+            </div>
+          ))}
       </div>
-      <div className="stages">
-        <div className="stage">
-          <h2>To-Do</h2>
-          <ul>
-            {stages.todo.map((taskItem, index) => (
-              <li key={index}>
-                <input
-                  type="checkbox"
-                  checked={taskItem.completed}
-                  onChange={() => toggleCompletion(index)}
-                />
-                <span className={taskItem.completed ? "completed" : ""}>
-                  {taskItem.task} - {taskItem.date}
-                </span>
-                <button onClick={() => moveToStage(index, "inProgress")}>
-                  Start
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="stage">
-          <h2>In Progress</h2>
-          <ul>
-            {stages.inProgress.map((taskItem, index) => (
-              <li key={index}>
-                <span>
-                  {taskItem.task} - {taskItem.date}
-                </span>
-                <button onClick={() => moveToStage(index, "done")}>
-                  Complete
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="stage">
-          <h2>Done</h2>
-          <ul>
-            {stages.done.map((taskItem, index) => (
-              <li key={index}>
-                <span className="completed">
-                  {taskItem.task} - {taskItem.date}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="stage">
+        <h2>In Progress</h2>
+        {tasks
+          .filter(task => task.stage === 'In Progress')
+          .map(task => (
+            <div key={task.id} className="task" style={{ backgroundColor: 'yellow' }}>
+              <p>{task.title}</p>
+              <p>Timestamp: {task.timestamp.toLocaleString()}</p>
+              <button className='buttonColor' onClick={() => moveTask(task.id, 'Previous')} disabled={task.stage === 'To Do'}>Previous</button>
+              <button className='buttonColor' onClick={() => moveTask(task.id, 'Next')} disabled={task.stage === 'Done'}>Next</button>
+            </div>
+          ))}
+      </div>
+      <div className="stage">
+        <h2>Done</h2>
+        {tasks
+          .filter(task => task.stage === 'Done')
+          .map(task => (
+            <div key={task.id} className="task" style={{ backgroundColor: 'green' }}>
+              <p>{task.title}</p>
+              <p>Timestamp: {task.timestamp.toLocaleString()}</p>
+              <button onClick={() => moveTask(task.id, 'Previous')} disabled={task.stage === 'To Do'}>Previous</button>
+            </div>
+          ))}
       </div>
     </div>
+    </>
   );
 }
 
